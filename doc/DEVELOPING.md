@@ -1197,6 +1197,11 @@ Automatic backups are disabled for isolated worktree instances created with
 configs are migrated to the disabled setting when their server next starts. The
 main/default instance keeps the normal enabled-by-default behavior.
 
+On server startup, automatic backups perform a catch-up backup only when the
+configured backup directory has no existing `paperclip-*.sql` / `paperclip-*.sql.gz`
+backup, or when the newest backup is older than the configured interval. Fresh
+backups are skipped so frequent restarts do not force extra backups.
+
 Configure these in:
 
 ```sh
