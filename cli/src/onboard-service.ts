@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import path from "node:path";
 import * as p from "@clack/prompts";
 import pc from "picocolors";
@@ -9,6 +10,7 @@ import { readRuntimeInfo, type PaperclipRuntimeInfo } from "./runtime-info.js";
 import {
   readInstallManifest,
   resolveInstallStorePaths,
+  writeManagedShim,
   type InstallManifest,
 } from "./install-store.js";
 import {
@@ -157,14 +159,17 @@ export async function ensureServiceShim(options: { installIfMissing?: boolean } 
     manifest = readInstallManifest();
   } catch {}
   try {
-    if (manifest?.source === "git" && manifest.repo) {
+    if (
+      manifest &&
+      fs.existsSync(path.join(resolveInstallStorePaths().currentPath, "node_modules", "paperclipai", "dist", "index.js"))
+    ) {
+      // Only the shim is missing: restore it for the recorded payload,
+      // keeping its version and update channel instead of reinstalling.
+      writeManagedShim();
+    } else if (manifest?.source === "git" && manifest.repo) {
       // A managed git payload must be preserved as-is: reinstall the
       // exact revision the manifest records, not an npm release.
       await installCommand({ repo: manifest.repo, ref: manifest.sha ?? manifest.ref, yes: true });
-    } else if (manifest?.source === "npm" && isInstallableReleaseVersion(manifest.version)) {
-      // A managed npm payload must be preserved as-is: reinstall the
-      // exact version the manifest records, not the invoking CLI version.
-      await installCommand({ version: manifest.version, yes: true });
     } else if (isInstallableReleaseVersion(packageVersion)) {
       // packageVersion, not cliVersion: a managed executable's cliVersion
       // carries provenance text that is not an installable npm spec.

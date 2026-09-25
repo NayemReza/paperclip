@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import {
   ensureServiceShim,
@@ -8,7 +10,7 @@ import {
   shouldOfferForegroundStart,
 } from "../onboard-service.js";
 
-import { readInstallManifest } from "../install-store.js";
+import { readInstallManifest, resolveInstallStorePaths, writeManagedShim } from "../install-store.js";
 import { installCommand } from "../commands/install.js";
 import { isExecutableFile, resolveServiceShimPath } from "../services/service-manager.js";
 
@@ -16,6 +18,7 @@ vi.mock("../version.js", () => ({ packageVersion: "2026.924.0" }));
 vi.mock("../install-store.js", async (importOriginal) => ({
   ...await importOriginal<typeof import("../install-store.js")>(),
   readInstallManifest: vi.fn(),
+  writeManagedShim: vi.fn(),
 }));
 vi.mock("../commands/install.js", () => ({ installCommand: vi.fn() }));
 vi.mock("../services/service-manager.js", async (importOriginal) => ({
@@ -34,20 +37,27 @@ it("does not install a missing shim when installation is disabled", async () => 
   expect(installCommand).not.toHaveBeenCalled();
 });
 
-it("preserves the managed npm version when repairing a missing shim", async () => {
+it("restores a missing shim without reinstalling the managed payload", async () => {
   vi.mocked(readInstallManifest).mockReturnValueOnce({
     schemaVersion: 1,
     source: "npm",
     version: "2026.824.1",
-    channel: "pinned",
+    channel: "latest",
     payloadPath: "/managed/payload",
     installedAt: "2026-08-24T00:00:00.000Z",
     previous: [],
   });
   vi.mocked(isExecutableFile).mockResolvedValueOnce(false).mockResolvedValueOnce(true);
 
-  await expect(ensureServiceShim()).resolves.toEqual({ ok: true, installedNow: true });
-  expect(installCommand).toHaveBeenCalledExactlyOnceWith({ version: "2026.824.1", yes: true });
+  const entrypoint = path.join(resolveInstallStorePaths().currentPath, "node_modules", "paperclipai", "dist", "index.js");
+  const existsSync = vi.spyOn(fs, "existsSync").mockImplementation((filePath) => filePath === entrypoint);
+  try {
+    await expect(ensureServiceShim()).resolves.toEqual({ ok: true, installedNow: true });
+    expect(writeManagedShim).toHaveBeenCalledExactlyOnceWith();
+    expect(installCommand).not.toHaveBeenCalled();
+  } finally {
+    existsSync.mockRestore();
+  }
 });
 
 function dashboardConfig(overrides: {
