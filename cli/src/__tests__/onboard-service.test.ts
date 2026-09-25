@@ -1,11 +1,32 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  ensureServiceShim,
   handleOnboardService,
   handoffToOnboardedService,
   isInstallableReleaseVersion,
   resolveOnboardServiceDashboardUrl,
   shouldOfferForegroundStart,
 } from "../onboard-service.js";
+
+import { installCommand } from "../commands/install.js";
+import { isExecutableFile, resolveServiceShimPath } from "../services/service-manager.js";
+
+vi.mock("../commands/install.js", () => ({ installCommand: vi.fn() }));
+vi.mock("../services/service-manager.js", async (importOriginal) => ({
+  ...await importOriginal<typeof import("../services/service-manager.js")>(),
+  isExecutableFile: vi.fn(),
+}));
+
+it("does not install a missing shim when installation is disabled", async () => {
+  vi.mocked(isExecutableFile).mockResolvedValue(false);
+
+  await expect(ensureServiceShim({ installIfMissing: false })).resolves.toEqual({
+    ok: false,
+    installedNow: false,
+    reason: `no executable exists at ${resolveServiceShimPath()}`,
+  });
+  expect(installCommand).not.toHaveBeenCalled();
+});
 
 function dashboardConfig(overrides: {
   host?: string;
