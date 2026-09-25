@@ -161,6 +161,10 @@ export async function ensureServiceShim(options: { installIfMissing?: boolean } 
       // A managed git payload must be preserved as-is: reinstall the
       // exact revision the manifest records, not an npm release.
       await installCommand({ repo: manifest.repo, ref: manifest.sha ?? manifest.ref, yes: true });
+    } else if (manifest?.source === "npm" && isInstallableReleaseVersion(manifest.version)) {
+      // A managed npm payload must be preserved as-is: reinstall the
+      // exact version the manifest records, not the invoking CLI version.
+      await installCommand({ version: manifest.version, yes: true });
     } else if (isInstallableReleaseVersion(packageVersion)) {
       // packageVersion, not cliVersion: a managed executable's cliVersion
       // carries provenance text that is not an installable npm spec.

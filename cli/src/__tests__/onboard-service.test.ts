@@ -8,9 +8,15 @@ import {
   shouldOfferForegroundStart,
 } from "../onboard-service.js";
 
+import { readInstallManifest } from "../install-store.js";
 import { installCommand } from "../commands/install.js";
 import { isExecutableFile, resolveServiceShimPath } from "../services/service-manager.js";
 
+vi.mock("../version.js", () => ({ packageVersion: "2026.924.0" }));
+vi.mock("../install-store.js", async (importOriginal) => ({
+  ...await importOriginal<typeof import("../install-store.js")>(),
+  readInstallManifest: vi.fn(),
+}));
 vi.mock("../commands/install.js", () => ({ installCommand: vi.fn() }));
 vi.mock("../services/service-manager.js", async (importOriginal) => ({
   ...await importOriginal<typeof import("../services/service-manager.js")>(),
@@ -26,6 +32,22 @@ it("does not install a missing shim when installation is disabled", async () => 
     reason: `no executable exists at ${resolveServiceShimPath()}`,
   });
   expect(installCommand).not.toHaveBeenCalled();
+});
+
+it("preserves the managed npm version when repairing a missing shim", async () => {
+  vi.mocked(readInstallManifest).mockReturnValueOnce({
+    schemaVersion: 1,
+    source: "npm",
+    version: "2026.824.1",
+    channel: "pinned",
+    payloadPath: "/managed/payload",
+    installedAt: "2026-08-24T00:00:00.000Z",
+    previous: [],
+  });
+  vi.mocked(isExecutableFile).mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+
+  await expect(ensureServiceShim()).resolves.toEqual({ ok: true, installedNow: true });
+  expect(installCommand).toHaveBeenCalledExactlyOnceWith({ version: "2026.824.1", yes: true });
 });
 
 function dashboardConfig(overrides: {
