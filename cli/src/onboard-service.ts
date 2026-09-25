@@ -4,7 +4,7 @@ import * as p from "@clack/prompts";
 import pc from "picocolors";
 import type { PaperclipConfig } from "./config/schema.js";
 import { openUrl } from "./client/board-auth.js";
-import { installCommand } from "./commands/install.js";
+import { installCommand, runCommandWithDiagnostics, smokePayload } from "./commands/install.js";
 import { resolvePaperclipInstanceId } from "./config/home.js";
 import { readRuntimeInfo, type PaperclipRuntimeInfo } from "./runtime-info.js";
 import {
@@ -163,8 +163,9 @@ export async function ensureServiceShim(options: { installIfMissing?: boolean } 
       manifest &&
       fs.existsSync(path.join(resolveInstallStorePaths().currentPath, "node_modules", "paperclipai", "dist", "index.js"))
     ) {
-      // Only the shim is missing: restore it for the recorded payload,
+      // Only the shim is missing: smoke-test and restore it for the recorded payload,
       // keeping its version and update channel instead of reinstalling.
+      await smokePayload(resolveInstallStorePaths().currentPath, manifest.version, runCommandWithDiagnostics);
       writeManagedShim();
     } else if (manifest?.source === "git" && manifest.repo) {
       // A managed git payload must be preserved as-is: reinstall the
