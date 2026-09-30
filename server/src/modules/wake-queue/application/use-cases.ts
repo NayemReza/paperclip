@@ -156,6 +156,7 @@ async function runReleaseDrain(
     const candidate = await ports.transaction.findNextDeferredWake({
       companyId: run.companyId, issueId: issue.id,
       ...(handoffWakeIds.length ? { excludedWakeIds: handoffWakeIds } : {}),
+      ...(locked.otherAgentsOnly ? { excludedAgentId: run.agentId } : {}),
     });
     if (!candidate) break;
     if (processedWakeIds.has(candidate.id)) {
@@ -308,6 +309,7 @@ async function runReleaseDrain(
     return promoted;
   }
 
+  if (locked.otherAgentsOnly) return { outcome: { kind: "released" }, postCommitEffects };
   return runReleaseRecoveryTail(issue, run, ports.host, ports.transaction, input, postCommitEffects);
 }
 
