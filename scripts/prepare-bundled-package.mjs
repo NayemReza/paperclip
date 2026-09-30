@@ -210,6 +210,15 @@ export function prepareBundledPackage(sourceDir, destinationDir, { sourceRoot = 
     writeFileSync(deployedPackagePath, `${JSON.stringify(stagedPackage, null, 2)}\n`);
     rmSync(resolve(destinationDir, "node_modules/@embedded-postgres"), { recursive: true, force: true });
   }
+
+  // The staged copy is already built and is only ever packed. Its pack-time
+  // lifecycle scripts point back into the workspace (e.g. ../scripts), so drop
+  // them; release packing already passes --ignore-scripts.
+  const stagedManifest = JSON.parse(readFileSync(deployedPackagePath, "utf8"));
+  if (stagedManifest.scripts) {
+    for (const hook of ["prepare", "prepack", "postpack"]) delete stagedManifest.scripts[hook];
+    writeFileSync(deployedPackagePath, `${JSON.stringify(stagedManifest, null, 2)}\n`);
+  }
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
