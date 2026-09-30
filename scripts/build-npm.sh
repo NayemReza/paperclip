@@ -77,6 +77,20 @@ node "$REPO_ROOT/scripts/prepare-npm-readme.mjs" \
   "$CLI_DIR/README.md" \
   "$README_ASSET_REF"
 
+# Git-ref installs (paperclipai install --repo/--ref) pack workspace packages
+# directly, without release.sh. Stage the release artifacts they list in
+# "files": the server's ui-dist and the shared skills directory.
+if [ ! -f "$REPO_ROOT/server/ui-dist/index.html" ]; then
+  echo "  -> server/ui-dist missing; preparing it for packaging"
+  bash "$REPO_ROOT/scripts/prepare-server-ui-dist.sh"
+fi
+for pkg_dir in server packages/adapters/claude-local packages/adapters/codex-local; do
+  if [ ! -d "$REPO_ROOT/$pkg_dir/skills" ]; then
+    echo "  -> staging skills into $pkg_dir"
+    cp -r "$REPO_ROOT/skills" "$REPO_ROOT/$pkg_dir/skills"
+  fi
+done
+
 # ── Step 6: Summary ───────────────────────────────────────────────────────────
 BUNDLE_SIZE=$(wc -c < "$DIST_DIR/index.js" | xargs)
 echo "  [6/6] Build verification..."
