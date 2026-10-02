@@ -115,6 +115,8 @@ import { issuesApi } from "@/api/issues";
 import { queryKeys } from "@/lib/queryKeys";
 import { useQueryClient } from "@tanstack/react-query";
 import { TaskChatPresentationProvider } from "@/components/task-chat/presentation-mode";
+import { agentAvatarOrIcon } from "@/lib/agent-icons";
+
 
 function toMs(value: Date | string | null | undefined): number {
   if (!value) return 0;
@@ -1649,7 +1651,7 @@ export function TaskChatThread(props: TaskChatThreadProps) {
                 meta?.agentName ??
                 (meta?.agentId ? agentMap?.get(meta.agentId)?.name : undefined),
               agentIcon: meta?.agentId
-                ? agentMap?.get(meta.agentId)?.icon
+                ? agentAvatarOrIcon(agentMap?.get(meta.agentId))
                 : undefined,
               standaloneHeader: true,
               animateFold: liveSeenRef.current.has(source.id),
@@ -1866,7 +1868,7 @@ export function TaskChatThread(props: TaskChatThreadProps) {
               meta?.agentName ??
               (meta?.agentId ? agentMap?.get(meta.agentId)?.name : undefined),
             agentIcon: meta?.agentId
-              ? agentMap?.get(meta.agentId)?.icon
+              ? agentAvatarOrIcon(agentMap?.get(meta.agentId))
               : undefined,
             standaloneHeader: sourceIsPaperclipRunner,
             continuedAfterSteering: sourceIsPaperclipRunner && segmentIndex > 0,
@@ -1956,7 +1958,7 @@ export function TaskChatThread(props: TaskChatThreadProps) {
                   ? agentMap?.get(liveRun.agentId)?.name
                   : undefined),
               agentIcon: liveRun.agentId
-                ? agentMap?.get(liveRun.agentId)?.icon
+                ? agentAvatarOrIcon(agentMap?.get(liveRun.agentId))
                 : undefined,
               standaloneHeader: isNativePaperclipRunnerRun(liveRun),
               continuedAfterSteering:

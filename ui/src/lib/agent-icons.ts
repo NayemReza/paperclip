@@ -96,3 +96,13 @@ export function getAgentIcon(iconName: string | null | undefined): LucideIcon {
   }
   return AGENT_ICONS[DEFAULT_ICON];
 }
+
+/** Agent avatar for the chat header: an image in `metadata.avatarUrl`
+ * (data:image/ or https URL) wins over the named icon. */
+export function agentAvatarOrIcon(
+  agent: { icon?: string | null; metadata?: Record<string, unknown> | null } | undefined,
+): string | null | undefined {
+  const url = agent?.metadata?.avatarUrl;
+  if (typeof url === "string" && /^(data:image\/|https:\/\/)/.test(url)) return url;
+  return agent?.icon;
+}

@@ -8,6 +8,7 @@
  * echo, which is the core legibility win.
  */
 import type { Agent } from "@paperclipai/shared";
+import { agentAvatarOrIcon } from "@/lib/agent-icons";
 import type { IssueChatComment } from "@/lib/issue-chat-messages";
 import { resolveCommentAttribution } from "@/lib/comment-attribution";
 import type { TaskChatAuthorKind, TaskChatItem, TaskChatMessageItem } from "./task-chat-model";
@@ -81,7 +82,7 @@ export function commentsToTaskChatItems(
     if (kind === "agent") {
       const agentId = effectiveAgentId(comment);
       authorName = (agentId && ctx.agentMap?.get(agentId)?.name) || "Agent";
-      agentIcon = agentId ? ctx.agentMap?.get(agentId)?.icon : undefined;
+      agentIcon = agentId ? agentAvatarOrIcon(ctx.agentMap?.get(agentId)) : undefined;
       onBehalfOfUserName = resolveCommentAttribution({
         authorAgentId: agentId,
         onBehalfOfUserId: comment.onBehalfOfUserId ?? null,

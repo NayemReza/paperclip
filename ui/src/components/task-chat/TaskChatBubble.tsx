@@ -9,7 +9,7 @@ import {
   ImageGalleryModal,
   type GalleryMediaItem,
 } from "@/components/ImageGalleryModal";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AgentIcon } from "@/components/AgentIconPicker";
 import {
   Attachment,
@@ -88,7 +88,9 @@ export function TaskChatAgentIdentity({
         className="shrink-0"
         data-testid="task-chat-agent-avatar"
       >
-        {agentIcon ? (
+        {agentIcon && /^(data:image\/|https:\/\/)/.test(agentIcon) ? (
+          <AvatarImage src={agentIcon} alt="" />
+        ) : agentIcon ? (
           <AvatarFallback>
             <AgentIcon icon={agentIcon} className="h-3.5 w-3.5" />
           </AvatarFallback>
