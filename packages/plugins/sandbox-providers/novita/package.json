@@ -1,6 +1,6 @@
 {
   "name": "@paperclipai/plugin-novita-sandbox",
-  "version": "2026.916.1",
+  "version": "1.1.0",
   "description": "Novita Agent Sandbox provider plugin for Paperclip environments",
   "license": "MIT",
   "homepage": "https://github.com/paperclipai/paperclip",
