@@ -16,7 +16,17 @@ describe("explicit Claude Keychain import", () => {
     mocks.read.mockRejectedValue(new Error("missing"));
     mocks.exec.mockResolvedValue({ stdout: JSON.stringify({ claudeAiOauth: { accessToken: "fixture" } }) });
     await expect(readClaudeToken({ allowKeychain: true })).resolves.toBe("fixture");
-    expect(mocks.exec).toHaveBeenCalledWith("/usr/bin/security", ["find-generic-password", "-s", "Claude Code-credentials", "-w"], expect.any(Object));
+    expect(mocks.exec).toHaveBeenCalledWith("/usr/bin/security", ["find-generic-password", "-s", "Claude Code-credentials", "-a", expect.any(String), "-w"], expect.any(Object));
+  });
+  it("falls back to an unscoped Keychain lookup when the user's item is missing", async () => {
+    vi.spyOn(process, "platform", "get").mockReturnValue("darwin");
+    vi.stubEnv("CLAUDE_CONFIG_DIR", "");
+    mocks.read.mockRejectedValue(new Error("missing"));
+    mocks.exec
+      .mockRejectedValueOnce(new Error("item not found"))
+      .mockResolvedValueOnce({ stdout: JSON.stringify({ claudeAiOauth: { accessToken: "any-account" } }) });
+    await expect(readClaudeToken({ allowKeychain: true })).resolves.toBe("any-account");
+    expect(mocks.exec).toHaveBeenLastCalledWith("/usr/bin/security", ["find-generic-password", "-s", "Claude Code-credentials", "-w"], expect.any(Object));
   });
   it("never substitutes Keychain credentials for a custom auth home", async () => {
     vi.spyOn(process, "platform", "get").mockReturnValue("darwin");

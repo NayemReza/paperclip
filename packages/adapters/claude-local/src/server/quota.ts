@@ -165,15 +165,31 @@ export async function readClaudeToken(options: { allowKeychain?: boolean } = {})
     const token = await readClaudeTokenFromFile(path.join(configDir, filename));
     if (token) return token;
   }
-  // Only an explicit local-account import may consult the user's Keychain.
-  // A custom auth home must never fall through to a different account.
+  // The Keychain is read only when the caller opts in. A custom auth home must
+  // never fall through to a different account.
   if (options.allowKeychain && process.platform === "darwin" && !process.env.CLAUDE_CONFIG_DIR?.trim()) {
-    try {
-      const { stdout } = await execFileAsync("/usr/bin/security", ["find-generic-password", "-s", "Claude Code-credentials", "-w"], { timeout: 10000, maxBuffer: 1024 * 1024 });
-      return parseClaudeCredentialToken(stdout);
-    } catch { return null; }
+    return readClaudeTokenFromKeychain("Claude Code-credentials");
   }
   return null;
+}
+
+// Claude Code stores its login under the macOS username as the account. Other
+// items can share the service name (for example one holding only MCP OAuth
+// state), so prefer the current user's item and fall back to any account.
+async function readClaudeTokenFromKeychain(service: string): Promise<string | null> {
+  const lookup = async (args: string[]): Promise<string | null> => {
+    try {
+      const { stdout } = await execFileAsync("/usr/bin/security", ["find-generic-password", ...args, "-w"], { timeout: 10000, maxBuffer: 1024 * 1024 });
+      return parseClaudeCredentialToken(stdout);
+    } catch { return null; }
+  };
+  let account: string | null = null;
+  try { account = os.userInfo().username || null; } catch { account = null; }
+  if (account) {
+    const scoped = await lookup(["-s", service, "-a", account]);
+    if (scoped) return scoped;
+  }
+  return lookup(["-s", service]);
 }
 
 interface AnthropicUsageWindow {
@@ -519,7 +535,9 @@ export async function getQuotaWindows(): Promise<ProviderQuotaResult> {
 
   const authStatus = await readClaudeAuthStatus();
   const authDescription = describeClaudeSubscriptionAuth(authStatus);
-  const token = await readClaudeToken();
+  // Quota polling reads the subscription login the operator signed in with on
+  // this host; on macOS that login lives in the Keychain, not a credentials file.
+  const token = await readClaudeToken({ allowKeychain: true });
 
   const errors: string[] = [];
 
