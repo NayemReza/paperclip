@@ -365,27 +365,27 @@
 }
 
 .dark {
-  --background: oklch(0.205 0 0);
-  --foreground: oklch(0.985 0 0);
+  --background: oklch(0.165 0.006 260); /* local/ui-contrast: darker page so cards and agent replies lift off it */
+  --foreground: oklch(0.92 0.004 260); /* local/ui-contrast: softer than near-white, less glare on long reads */
   --side-panel-bg: var(--background);
-  --side-panel-fg: oklch(0.985 0 0);
+  --side-panel-fg: oklch(0.92 0.004 260);
   --streamlined-task-detail-bg: var(--background);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
+  --card: oklch(0.225 0.008 260);
+  --card-foreground: oklch(0.92 0.004 260);
+  --popover: oklch(0.235 0.008 260);
+  --popover-foreground: oklch(0.92 0.004 260);
   --primary: oklch(0.922 0 0);
   --primary-foreground: oklch(0.205 0 0);
-  --bubble-agent: oklch(0.185 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --bubble-agent: oklch(0.225 0.008 260);
+  --secondary: oklch(0.285 0.008 260);
+  --secondary-foreground: oklch(0.92 0.004 260);
+  --muted: oklch(0.285 0.008 260);
+  --muted-foreground: oklch(0.72 0.006 260);
+  --accent: oklch(0.285 0.008 260);
+  --accent-foreground: oklch(0.92 0.004 260);
   --destructive: oklch(0.637 0.237 25.331); /* Gallery feedback round 1: user preferred master's original dark destructive red over the preset's softer 0.704 0.191 22.216. */
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(1 0 0 / 10%);
+  --border: oklch(1 0 0 / 15%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
   --scrollbar-thumb: oklch(0.4 0 0);
@@ -3047,4 +3047,139 @@ span.paperclip-mention-chip[data-mention-kind="external-object"] {
 }
 @media (prefers-reduced-motion: reduce) {
   .announcement-well { animation: none; }
+}
+
+/* local/ui-contrast: agent replies get their own panel and an accent edge so
+   it is clear where one reply ends; long prose is capped for readability. */
+[data-testid="task-chat-agent-bubble"] {
+  background: var(--bubble-agent, var(--card));
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--liveness-blue);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+}
+[data-testid="task-chat-agent-bubble"] .paperclip-markdown,
+[data-testid="task-chat-human-bubble"] .paperclip-markdown {
+  max-width: 88ch;
+}
+
+/* local/ui-contrast: the Properties side panel sits one step above the page in
+   dark mode instead of sharing its colour. */
+.dark .streamlined-task-detail-surface,
+.dark {
+  --side-panel-bg: oklch(0.2 0.007 260);
+}
+
+/* local/ui-contrast: calmer, desaturated blues in dark mode (saturated blue
+   "buzzes" on dark surfaces). Human bubble: white text 6.1:1. Reply strip:
+   5.2:1 against the reply panel. */
+.dark {
+  --liveness-blue: oklch(0.5 0.12 262);
+  --reply-strip: oklch(0.65 0.13 262);
+}
+[data-testid="task-chat-agent-bubble"] {
+  border-left-color: var(--reply-strip, var(--liveness-blue));
+  padding: 1rem 1.25rem;
+}
+
+/* local/ui-contrast: breathing room inside replies. */
+[data-testid="task-chat-agent-bubble"] .paperclip-markdown {
+  line-height: 1.7;
+}
+[data-testid="task-chat-agent-bubble"] .paperclip-markdown > * + * {
+  margin-top: 0.9em;
+}
+[data-testid="task-chat-agent-bubble"] .paperclip-markdown li + li {
+  margin-top: 0.55em;
+}
+[data-testid="task-chat-agent-bubble"] .paperclip-markdown li > ul,
+[data-testid="task-chat-agent-bubble"] .paperclip-markdown li > ol {
+  margin-top: 0.45em;
+}
+[data-testid="task-chat-agent-bubble"] .paperclip-markdown :is(h1, h2, h3, h4):not(:first-child) {
+  margin-top: 1.3em;
+}
+
+/* local/ui-contrast: dark-mode reading hierarchy by brightness. Body text a
+   step dimmer, bold and headings near-white, inline code a visible chip.
+   Applies to all rendered markdown (replies, documents, descriptions) except
+   text sitting on an accent bubble. */
+.dark .paperclip-markdown:not(.paperclip-markdown-on-accent) {
+  color: oklch(0.85 0.006 260);
+}
+.dark .paperclip-markdown:not(.paperclip-markdown-on-accent) :is(strong, b) {
+  color: oklch(0.985 0 0);
+  font-weight: 650;
+}
+.dark .paperclip-markdown:not(.paperclip-markdown-on-accent) :is(h1, h2, h3, h4) {
+  color: oklch(0.985 0 0);
+  font-weight: 650;
+  letter-spacing: -0.005em;
+}
+.dark .paperclip-markdown:not(.paperclip-markdown-on-accent) h2 { font-size: 1.2em; }
+.dark .paperclip-markdown:not(.paperclip-markdown-on-accent) h3 { font-size: 1.08em; }
+.dark .paperclip-markdown:not(.paperclip-markdown-on-accent) :not(pre) > code {
+  background: oklch(0.33 0.014 260);
+  border: 1px solid oklch(1 0 0 / 0.12);
+  color: oklch(0.9 0.05 220);
+  border-radius: 0.3rem;
+  padding: 0.08em 0.35em;
+  font-size: 0.9em;
+}
+.dark .paperclip-markdown:not(.paperclip-markdown-on-accent) a {
+  color: oklch(0.78 0.11 250);
+}
+/* Comfortable line length: ~75 characters (best-practice range 50-75). */
+[data-testid="task-chat-agent-bubble"] .paperclip-markdown,
+[data-testid="task-chat-human-bubble"] .paperclip-markdown {
+  max-width: 76ch;
+}
+
+/* local/ui-contrast: 16px reading size for rendered markdown (was 15px). */
+.paperclip-markdown {
+  font-size: 1rem;
+}
+
+/* local/ui-contrast: a clear gap before each agent's name, so one reply's
+   footer doesn't run into the next reply. */
+[data-testid="task-chat-agent-identity"] {
+  margin-top: 0.75rem;
+}
+
+/* local/ui-contrast: side-panel section labels (WORK, RELATIONSHIPS, ...)
+   slightly larger and brighter so the panel scans easily. */
+.dark section[class*="bg-(--side-panel-bg)"] [class~="uppercase"][class*="--text-nano"] {
+  font-size: 11px;
+  color: oklch(0.78 0.01 260);
+  letter-spacing: 0.06em;
+}
+
+/* local/ui-contrast: tables and code blocks in rendered markdown (dark). */
+.dark .paperclip-markdown:not(.paperclip-markdown-on-accent) table {
+  border-collapse: collapse;
+}
+.dark .paperclip-markdown:not(.paperclip-markdown-on-accent) thead th {
+  background: oklch(0.27 0.01 260);
+  color: oklch(0.985 0 0);
+  font-weight: 650;
+  border-bottom: 1px solid oklch(1 0 0 / 0.22);
+}
+.dark .paperclip-markdown:not(.paperclip-markdown-on-accent) :is(th, td) {
+  padding: 0.5em 0.75em;
+}
+.dark .paperclip-markdown:not(.paperclip-markdown-on-accent) tbody tr {
+  border-bottom: 1px solid oklch(1 0 0 / 0.1);
+}
+.dark .paperclip-markdown:not(.paperclip-markdown-on-accent) tbody tr:nth-child(even) {
+  background: oklch(1 0 0 / 0.025);
+}
+.dark .paperclip-markdown:not(.paperclip-markdown-on-accent) pre {
+  background: oklch(0.19 0.008 260);
+  border: 1px solid oklch(1 0 0 / 0.12);
+}
+
+/* local/ui-contrast: larger agent avatar in chat headers (portraits read at 40px). */
+[data-testid="task-chat-agent-avatar"] {
+  width: 2.5rem;
+  height: 2.5rem;
 }
